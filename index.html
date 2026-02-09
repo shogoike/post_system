@@ -555,16 +555,27 @@
             }
 
             if (raceDataCache) {
-                // 今日の日付を取得
+                // 今日と明日の日付を取得
                 const now = new Date();
-                const dateStr = now.getFullYear().toString() +
-                    (now.getMonth() + 1).toString().padStart(2, '0') +
-                    now.getDate().toString().padStart(2, '0');
+                const tomorrow = new Date(now);
+                tomorrow.setDate(tomorrow.getDate() + 1);
 
-                // 競艇と競輪のデータをマージ
-                const kyoteiRaces = raceDataCache.kyotei?.[dateStr] || {};
-                const keirinRaces = raceDataCache.keirin?.[dateStr] || {};
-                const mergedRaces = { ...kyoteiRaces, ...keirinRaces };
+                const formatDate = (d) => d.getFullYear().toString() +
+                    (d.getMonth() + 1).toString().padStart(2, '0') +
+                    d.getDate().toString().padStart(2, '0');
+
+                const todayStr = formatDate(now);
+                const tomorrowStr = formatDate(tomorrow);
+
+                // 今日と明日の競艇・競輪データをマージ
+                const mergedRaces = {
+                    ...(raceDataCache.kyotei?.[todayStr] || {}),
+                    ...(raceDataCache.keirin?.[todayStr] || {}),
+                    ...(raceDataCache.kyotei?.[tomorrowStr] || {}),
+                    ...(raceDataCache.keirin?.[tomorrowStr] || {})
+                };
+
+                console.log('利用可能な会場:', Object.keys(mergedRaces));
 
                 // レースタイトルごとに時間チェック
                 const racePattern = /([^\d]+?)(\d+)R\s+(\d{1,2}):(\d{2})/;
