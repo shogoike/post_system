@@ -24,7 +24,7 @@ function doPost(e) {
     const timestamp = data.timestamp || new Date().toLocaleString('ja-JP');
 
     const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-    const sheet = ss.getActiveSheet();
+    const sheet = ss.getSheetByName('post') || ss.insertSheet('post');
 
     // 1列目: パターン名, 2列目: テキスト, 3列目: タイムスタンプ
     sheet.appendRow([pattern, text, timestamp]);

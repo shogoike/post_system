@@ -336,6 +336,20 @@
         .config-section.show {
             display: block;
         }
+        .reload-btn {
+            width: 100%;
+            padding: 10px;
+            margin-top: 12px;
+            background-color: #2196f3;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .reload-btn:active {
+            background-color: #1976d2;
+        }
     </style>
 </head>
 <body>
@@ -375,6 +389,14 @@
         <div class="config-section section" id="configSection">
             <label>Google Apps Script URL:</label>
             <input type="text" id="gasUrl" placeholder="GAS URL" />
+
+            <label style="margin-top:12px;">JSONbin.io Bin ID:</label>
+            <input type="text" id="jsonbinBinId" placeholder="例: 65a1b2c3d4e5f6..." />
+
+            <label style="margin-top:12px;">JSONbin.io API Key:</label>
+            <input type="text" id="jsonbinApiKey" placeholder="$2a$10$..." />
+
+            <button class="reload-btn" id="reloadPatternsBtn">パターンを再読み込み</button>
         </div>
     </div>
 
@@ -400,7 +422,12 @@
         const APP_PASSWORD = 'post2024';
         const defaultGasUrl = 'https://script.google.com/macros/s/AKfycby8pyivOUJvmC3N9FZGIU7foq4uA3QQvctRdiPQmVZGL2nGNFONZzHUeIQ03Jk7xS9u/exec';
 
-        const patterns = [
+        // JSONbin.io設定
+        const JSONBIN_API_KEY = '$2a$10$xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'; // ← あなたのX-Master-Keyに変更
+        const JSONBIN_BIN_ID = 'xxxxxxxxxxxxxxxxxxxxxxxx'; // ← あなたのBin IDに変更
+
+        // デフォルトパターン（JSONbin.io読み込み失敗時のフォールバック）
+        const defaultPatterns = [
             "パターン1", "パターン2", "パターン2.5", "パターン3", "パターン4", "パターン5",
             "パターン6-新人ギャングモニ", "パターン7-ギャングデイ",
             "パターン8-ナイターギャングたかしさん指示", "パターン9-ナイターギャング昼投稿分",
@@ -409,6 +436,7 @@
             "西村さん", "渡辺さん", "佐藤さん", "マリナさん"
         ];
 
+        let patterns = [...defaultPatterns];
         let selectedPattern = null;
 
         // テキスト整形処理
@@ -518,15 +546,50 @@
             return { errors, warnings, formattedText: text };
         }
 
+        // JSONbin.ioからパターンを読み込む
+        async function loadPatternsFromJsonbin() {
+            // 設定からBin IDとAPI Keyを取得
+            const binId = localStorage.getItem('jsonbinBinId') || JSONBIN_BIN_ID;
+            const apiKey = localStorage.getItem('jsonbinApiKey') || JSONBIN_API_KEY;
+
+            if (!binId || binId.includes('xxxx')) {
+                console.log('JSONbin.io未設定、デフォルトパターンを使用');
+                return defaultPatterns;
+            }
+
+            try {
+                const response = await fetch(`https://api.jsonbin.io/v3/b/${binId}/latest`, {
+                    headers: {
+                        'X-Master-Key': apiKey
+                    }
+                });
+
+                if (!response.ok) throw new Error('JSONbin.io読み込みエラー');
+
+                const data = await response.json();
+                console.log('JSONbin.ioからパターン読み込み成功');
+                return data.record.patterns || defaultPatterns;
+            } catch (error) {
+                console.error('JSONbin.io読み込み失敗:', error);
+                return defaultPatterns;
+            }
+        }
+
         // パターンボタン生成
-        const buttonsContainer = document.getElementById('patternButtons');
-        patterns.forEach(pattern => {
-            const btn = document.createElement('button');
-            btn.className = 'pattern-btn';
-            btn.textContent = pattern;
-            btn.addEventListener('click', () => selectPattern(pattern, btn));
-            buttonsContainer.appendChild(btn);
-        });
+        function renderPatternButtons(patternList) {
+            const buttonsContainer = document.getElementById('patternButtons');
+            buttonsContainer.innerHTML = '';
+            patternList.forEach(pattern => {
+                const btn = document.createElement('button');
+                btn.className = 'pattern-btn';
+                btn.textContent = pattern;
+                btn.addEventListener('click', () => selectPattern(pattern, btn));
+                buttonsContainer.appendChild(btn);
+            });
+        }
+
+        // 初期表示（デフォルトパターン）
+        renderPatternButtons(patterns);
 
         function selectPattern(pattern, btn) {
             document.querySelectorAll('.pattern-btn').forEach(b => b.classList.remove('selected'));
@@ -540,10 +603,13 @@
         }
 
         // 初期化
-        function init() {
+        async function init() {
             const isLoggedIn = sessionStorage.getItem('loggedIn') === 'true';
             if (isLoggedIn) {
                 showApp();
+                // JSONbin.ioからパターンを読み込み
+                patterns = await loadPatternsFromJsonbin();
+                renderPatternButtons(patterns);
             } else {
                 showAuth();
             }
@@ -560,6 +626,12 @@
 
             const savedUrl = localStorage.getItem('gasUrl');
             document.getElementById('gasUrl').value = savedUrl || defaultGasUrl;
+
+            // JSONbin.io設定を復元
+            const savedBinId = localStorage.getItem('jsonbinBinId');
+            const savedApiKey = localStorage.getItem('jsonbinApiKey');
+            if (savedBinId) document.getElementById('jsonbinBinId').value = savedBinId;
+            if (savedApiKey) document.getElementById('jsonbinApiKey').value = savedApiKey;
         }
 
         function login() {
@@ -700,6 +772,28 @@
             } catch (err) {
                 alert('クリップボードへのアクセスが許可されていません');
             }
+        });
+
+        // JSONbin.io設定の保存
+        document.getElementById('jsonbinBinId').addEventListener('change', (e) => {
+            localStorage.setItem('jsonbinBinId', e.target.value);
+        });
+        document.getElementById('jsonbinApiKey').addEventListener('change', (e) => {
+            localStorage.setItem('jsonbinApiKey', e.target.value);
+        });
+
+        // パターン再読み込み
+        document.getElementById('reloadPatternsBtn').addEventListener('click', async () => {
+            const btn = document.getElementById('reloadPatternsBtn');
+            btn.textContent = '読み込み中...';
+            btn.disabled = true;
+
+            patterns = await loadPatternsFromJsonbin();
+            renderPatternButtons(patterns);
+
+            btn.textContent = 'パターンを再読み込み';
+            btn.disabled = false;
+            alert(`${patterns.length}件のパターンを読み込みました`);
         });
 
         init();
