@@ -245,16 +245,55 @@
             margin: 0 0 16px 0;
             font-size: 1.2rem;
         }
+        .modal-errors {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            text-align: left;
+            font-size: 13px;
+            display: none;
+        }
+        .modal-errors.show {
+            display: block;
+        }
+        .modal-errors ul, .modal-warnings ul {
+            margin: 4px 0 0 0;
+            padding-left: 20px;
+        }
+        .modal-warnings {
+            background: #fff3cd;
+            color: #856404;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            text-align: left;
+            font-size: 13px;
+            display: none;
+        }
+        .modal-warnings.show {
+            display: block;
+        }
         .modal-content {
             background: #f5f5f5;
             padding: 16px;
             border-radius: 8px;
             margin-bottom: 20px;
             text-align: left;
+            max-height: 200px;
+            overflow-y: auto;
         }
         .modal-content p {
             margin: 8px 0;
             word-break: break-all;
+        }
+        .modal-content pre {
+            margin: 8px 0;
+            white-space: pre-wrap;
+            word-break: break-all;
+            font-size: 12px;
+            font-family: inherit;
         }
         .modal-content strong {
             color: #1976d2;
@@ -342,10 +381,13 @@
     <!-- 確認ダイアログ -->
     <div class="modal-overlay" id="modalOverlay">
         <div class="modal">
-            <h3>送信確認</h3>
+            <h3 id="modalTitle">送信確認</h3>
+            <div class="modal-errors" id="modalErrors"></div>
+            <div class="modal-warnings" id="modalWarnings"></div>
             <div class="modal-content">
                 <p><strong>パターン:</strong> <span id="confirmPattern"></span></p>
-                <p><strong>テキスト:</strong> <span id="confirmText"></span></p>
+                <p><strong>テキスト:</strong></p>
+                <pre id="confirmText"></pre>
             </div>
             <div class="modal-buttons">
                 <button class="modal-btn cancel" id="cancelBtn">キャンセル</button>
@@ -368,6 +410,113 @@
         ];
 
         let selectedPattern = null;
+
+        // テキスト整形処理
+        function formatText(text) {
+            text = text.replace(/  /g, " ");
+            text = text.replace(/R /g, "R");
+            text = text.replace(/R　/g, "R");
+            text = text.replace(/R/g, "R ");
+            text = text.replace(/08:/g, "8:");
+            text = text.replace(/09:/g, "9:");
+            text = text.replace(/\u3000/g, "");
+            text = text.replace(/\n\u3000\n/g, "\n\n");
+            text = text.replace(/\n \n/g, "\n\n");
+            text = text.replace(/\n\n\n/g, "\n\n");
+            text = text.replace(/b/g, "B");
+            text = text.replace(/o/g, "O");
+            text = text.replace(/x/g, "X");
+            text = text.replace(/ー/g, "-");
+            text = text.replace(/―/g, "-");
+            text = text.replace(/＝/g, "=");
+            text = text.replace(/－/g, "-");
+            text = text.replace(/‐/g, "-");
+            return text;
+        }
+
+        // 書式チェック
+        function validateText(text, patternName) {
+            const errors = [];
+            const warnings = [];
+
+            if (!text.trim()) {
+                return { errors, warnings, formattedText: text };
+            }
+
+            // テキスト整形
+            text = formatText(text);
+
+            const textBlocks = text.split("\n\n");
+            const raceTitle = textBlocks.filter((_, i) => i % 2 === 0);
+            const lines = text.split("\n");
+
+            // Check 1: 重複チェック
+            const titleSet = new Set(raceTitle);
+            if (raceTitle.length !== titleSet.size) {
+                errors.push("レースに重複がある。確認してください。");
+            }
+
+            // Check 2: 誤字チェック (松坂)
+            for (const title of raceTitle) {
+                if (title.includes("松坂")) {
+                    warnings.push(`松坂 in "${title}" (誤字の可能性 → 松阪?)`);
+                }
+            }
+
+            // Check 3: 書式チェック (R, 枚)
+            for (const title of raceTitle) {
+                if (title && !title.includes("R ")) {
+                    errors.push(`書式エラー: "${title}" (Rがありません)`);
+                }
+                if (title && title.includes("枚")) {
+                    errors.push(`書式エラー: "${title}" (タイトルに枚があります)`);
+                }
+            }
+
+            // Check 4: 正規表現パターンチェック
+            const regexPatterns = [
+                /(\d+|全)[-=](\d+|全)[-=](\d+|全) (\d{1,2})枚/,
+                /[ぁ-ん一-龥]{1,4}\d{1,2}R\s(?:[0-9]|0\d|1\d|2[0-3]):[0-5]\d/,
+                /(\d{3,4})BOX\s*(\d{1,3})枚/
+            ];
+
+            for (const line of lines) {
+                if (line === "") continue;
+
+                // 同一行に複数の=記号チェック
+                if ((line.match(/=/g) || []).length >= 2) {
+                    errors.push(`"${line}" - 同じ行に複数の=記号があります`);
+                    continue;
+                }
+
+                // パターンマッチチェック
+                let matched = false;
+                for (const pattern of regexPatterns) {
+                    if (pattern.test(line)) {
+                        matched = true;
+                        break;
+                    }
+                }
+                if (!matched) {
+                    errors.push(`"${line}" - 書式がおかしい`);
+                }
+            }
+
+            // Check 5: 日付チェック
+            const dates = [];
+            const datePattern = /(\d{1,2})\/(\d{1,2})/;
+            for (const title of raceTitle) {
+                const match = title.match(datePattern);
+                if (match) {
+                    dates.push(`${match[1]}/${match[2]}`);
+                }
+            }
+            if (dates.length > 0 && new Set(dates).size > 1) {
+                warnings.push("今日明日の扱いのレースが混ざっている可能性があります");
+            }
+
+            return { errors, warnings, formattedText: text };
+        }
 
         // パターンボタン生成
         const buttonsContainer = document.getElementById('patternButtons');
@@ -430,12 +579,44 @@
             showAuth();
         }
 
+        let formattedTextToSend = '';
+
         function showConfirmDialog() {
             if (!selectedPattern) return;
 
             const text = document.getElementById('inputText').value.trim();
+            const { errors, warnings, formattedText } = validateText(text, selectedPattern);
+
+            formattedTextToSend = formattedText;
+
+            // エラー表示
+            const errorsDiv = document.getElementById('modalErrors');
+            if (errors.length > 0) {
+                errorsDiv.innerHTML = '<strong>エラー:</strong><ul>' +
+                    errors.map(e => `<li>${e}</li>`).join('') + '</ul>';
+                errorsDiv.classList.add('show');
+                document.getElementById('modalTitle').textContent = '書式エラーがあります';
+                document.getElementById('confirmBtn').disabled = true;
+                document.getElementById('confirmBtn').style.background = '#ccc';
+            } else {
+                errorsDiv.classList.remove('show');
+                document.getElementById('modalTitle').textContent = '送信確認';
+                document.getElementById('confirmBtn').disabled = false;
+                document.getElementById('confirmBtn').style.background = '#4caf50';
+            }
+
+            // 警告表示
+            const warningsDiv = document.getElementById('modalWarnings');
+            if (warnings.length > 0) {
+                warningsDiv.innerHTML = '<strong>警告:</strong><ul>' +
+                    warnings.map(w => `<li>${w}</li>`).join('') + '</ul>';
+                warningsDiv.classList.add('show');
+            } else {
+                warningsDiv.classList.remove('show');
+            }
+
             document.getElementById('confirmPattern').textContent = selectedPattern;
-            document.getElementById('confirmText').textContent = text || '(なし)';
+            document.getElementById('confirmText').textContent = formattedText || '(なし)';
             document.getElementById('modalOverlay').classList.add('show');
         }
 
@@ -453,7 +634,7 @@
             hideConfirmDialog();
 
             const gasUrl = document.getElementById('gasUrl').value.trim();
-            const text = document.getElementById('inputText').value.trim();
+            const text = formattedTextToSend;
 
             if (!gasUrl) {
                 showStatus('GAS URLを設定してください', 'error');
