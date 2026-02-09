@@ -335,13 +335,28 @@
 
             errorDiv.textContent = '';
 
-            const { data, error } = await supabase.auth.signInWithPassword({
-                email: email,
-                password: password
-            });
+            if (!email || !password) {
+                errorDiv.textContent = 'メールアドレスとパスワードを入力してください';
+                return;
+            }
 
-            if (error) {
-                errorDiv.textContent = 'ログイン失敗: ' + error.message;
+            try {
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email: email,
+                    password: password
+                });
+
+                console.log('Login response:', data, error);
+
+                if (error) {
+                    errorDiv.textContent = 'ログイン失敗: ' + error.message;
+                } else if (data.session) {
+                    console.log('Login success, session:', data.session);
+                    showApp(data.user);
+                }
+            } catch (e) {
+                console.error('Login error:', e);
+                errorDiv.textContent = 'エラー: ' + e.message;
             }
         }
 
