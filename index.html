@@ -9,179 +9,293 @@
             box-sizing: border-box;
         }
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 16px;
             background-color: #f5f5f5;
+            font-size: 16px;
         }
         h1 {
             color: #333;
             text-align: center;
+            font-size: 1.5rem;
+            margin: 0 0 16px 0;
         }
 
         /* ログインフォーム */
         .auth-container {
             background: #fff;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             max-width: 400px;
-            margin: 50px auto;
+            margin: 40px auto;
         }
         .auth-container h2 {
             margin-top: 0;
             text-align: center;
+            font-size: 1.3rem;
         }
         .auth-container input {
             width: 100%;
-            padding: 12px;
-            margin-bottom: 15px;
+            padding: 14px;
+            margin-bottom: 16px;
             border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 14px;
+            border-radius: 8px;
+            font-size: 16px;
         }
         .auth-container button {
             width: 100%;
-            padding: 12px;
+            padding: 14px;
             background-color: #4285f4;
             color: white;
             border: none;
-            border-radius: 4px;
+            border-radius: 8px;
             font-size: 16px;
             cursor: pointer;
         }
-        .auth-container button:hover {
+        .auth-container button:active {
             background-color: #3367d6;
         }
         .auth-error {
             color: #dc3545;
-            margin-bottom: 15px;
+            margin-bottom: 16px;
             text-align: center;
         }
 
         /* メインアプリ */
         .app-container {
             display: none;
+            max-width: 600px;
+            margin: 0 auto;
         }
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
         }
         .logout-btn {
             padding: 8px 16px;
             background-color: #6c757d;
             color: white;
             border: none;
-            border-radius: 4px;
+            border-radius: 6px;
             cursor: pointer;
-        }
-        .logout-btn:hover {
-            background-color: #5a6268;
-        }
-
-        .config-section {
-            background: #fff;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .config-section label {
-            font-weight: bold;
-            display: block;
-            margin-bottom: 5px;
-        }
-        .config-section input {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
             font-size: 14px;
         }
-        .text-section {
+
+        .section {
             background: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
-        .text-section label {
+        .section label {
             font-weight: bold;
             display: block;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: #555;
+        }
+        .section input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
         }
         textarea {
             width: 100%;
-            height: 120px;
+            height: 100px;
             padding: 12px;
             border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 14px;
+            border-radius: 8px;
+            font-size: 16px;
             resize: vertical;
         }
-        .buttons-section {
-            background: #fff;
-            padding: 20px;
+        .paste-btn {
+            width: 100%;
+            padding: 10px;
+            margin-top: 8px;
+            background-color: #ff9800;
+            color: white;
+            border: none;
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            font-size: 14px;
+            cursor: pointer;
         }
-        .buttons-section h2 {
-            margin-top: 0;
-            color: #555;
+        .paste-btn:active {
+            background-color: #f57c00;
         }
+
+        /* パターン選択 */
         .pattern-buttons {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
         }
         .pattern-btn {
-            padding: 12px 20px;
-            font-size: 14px;
-            border: none;
-            border-radius: 6px;
+            padding: 12px 8px;
+            font-size: 12px;
+            border: 2px solid #4285f4;
+            border-radius: 8px;
             cursor: pointer;
+            background-color: #fff;
+            color: #4285f4;
+            transition: all 0.2s;
+            text-align: center;
+            word-break: break-all;
+        }
+        .pattern-btn.selected {
             background-color: #4285f4;
             color: white;
-            transition: all 0.2s;
-        }
-        .pattern-btn:hover {
-            background-color: #3367d6;
-            transform: translateY(-2px);
         }
         .pattern-btn:active {
-            transform: translateY(0);
+            transform: scale(0.98);
         }
-        .pattern-btn:disabled {
+
+        /* 選択中のパターン表示 */
+        .selected-pattern {
+            background: #e3f2fd;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 16px;
+            font-weight: bold;
+            color: #1976d2;
+            display: none;
+        }
+        .selected-pattern.show {
+            display: block;
+        }
+
+        /* 送信ボタン */
+        .submit-btn {
+            width: 100%;
+            padding: 16px;
+            font-size: 18px;
+            font-weight: bold;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            background-color: #4caf50;
+            color: white;
+            margin-top: 8px;
+        }
+        .submit-btn:disabled {
             background-color: #ccc;
             cursor: not-allowed;
-            transform: none;
         }
+        .submit-btn:not(:disabled):active {
+            background-color: #43a047;
+        }
+
+        /* ステータス */
         .status {
-            margin-top: 20px;
-            padding: 15px;
+            margin-top: 16px;
+            padding: 14px;
             border-radius: 8px;
             display: none;
+            text-align: center;
         }
         .status.success {
             display: block;
             background-color: #d4edda;
             color: #155724;
-            border: 1px solid #c3e6cb;
         }
         .status.error {
             display: block;
             background-color: #f8d7da;
             color: #721c24;
-            border: 1px solid #f5c6cb;
         }
         .status.loading {
             display: block;
             background-color: #fff3cd;
             color: #856404;
-            border: 1px solid #ffeeba;
+        }
+
+        /* 確認ダイアログ */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        .modal-overlay.show {
+            display: flex;
+        }
+        .modal {
+            background: #fff;
+            border-radius: 16px;
+            padding: 24px;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+        .modal h3 {
+            margin: 0 0 16px 0;
+            font-size: 1.2rem;
+        }
+        .modal-content {
+            background: #f5f5f5;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        .modal-content p {
+            margin: 8px 0;
+            word-break: break-all;
+        }
+        .modal-content strong {
+            color: #1976d2;
+        }
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+        }
+        .modal-btn {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .modal-btn.cancel {
+            background: #e0e0e0;
+            color: #333;
+        }
+        .modal-btn.confirm {
+            background: #4caf50;
+            color: white;
+        }
+
+        /* 設定セクション（折りたたみ） */
+        .config-toggle {
+            background: none;
+            border: none;
+            color: #666;
+            font-size: 14px;
+            cursor: pointer;
+            padding: 8px;
+            width: 100%;
+            text-align: center;
+        }
+        .config-section {
+            display: none;
+        }
+        .config-section.show {
+            display: block;
         }
     </style>
 </head>
@@ -197,67 +311,84 @@
     <!-- メインアプリ -->
     <div class="app-container" id="appContainer">
         <div class="header">
-            <h1>パターン投稿システム</h1>
+            <h1>パターン投稿</h1>
             <button class="logout-btn" id="logoutBtn">ログアウト</button>
         </div>
 
-        <div class="config-section">
-            <label for="gasUrl">Google Apps Script URL:</label>
-            <input type="text" id="gasUrl" placeholder="https://script.google.com/macros/s/xxx/exec" />
+        <div class="section">
+            <label>テキスト:</label>
+            <textarea id="inputText" placeholder="ここにテキストを入力"></textarea>
+            <button class="paste-btn" id="pasteBtn">クリップボードから貼り付け</button>
         </div>
 
-        <div class="text-section">
-            <label for="inputText">テキスト:</label>
-            <textarea id="inputText" placeholder="ここにテキストを入力してください"></textarea>
-        </div>
-
-        <div class="buttons-section">
-            <h2>パターン選択</h2>
+        <div class="section">
+            <label>パターン選択:</label>
             <div class="pattern-buttons" id="patternButtons"></div>
         </div>
 
+        <div class="selected-pattern" id="selectedPattern"></div>
+
+        <button class="submit-btn" id="submitBtn" disabled>パターンを選択してください</button>
+
         <div id="status" class="status"></div>
+
+        <button class="config-toggle" id="configToggle">設定を表示</button>
+        <div class="config-section section" id="configSection">
+            <label>Google Apps Script URL:</label>
+            <input type="text" id="gasUrl" placeholder="GAS URL" />
+        </div>
+    </div>
+
+    <!-- 確認ダイアログ -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+            <h3>送信確認</h3>
+            <div class="modal-content">
+                <p><strong>パターン:</strong> <span id="confirmPattern"></span></p>
+                <p><strong>テキスト:</strong> <span id="confirmText"></span></p>
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-btn cancel" id="cancelBtn">キャンセル</button>
+                <button class="modal-btn confirm" id="confirmBtn">送信する</button>
+            </div>
+        </div>
     </div>
 
     <script>
-        // =====================================================
-        // パスワード設定 - 好きなパスワードに変更してください
-        // =====================================================
         const APP_PASSWORD = 'post2024';
+        const defaultGasUrl = 'https://script.google.com/macros/s/AKfycby8pyivOUJvmC3N9FZGIU7foq4uA3QQvctRdiPQmVZGL2nGNFONZzHUeIQ03Jk7xS9u/exec';
 
-        // パターン名の一覧
         const patterns = [
-            "パターン1",
-            "パターン2",
-            "パターン2.5",
-            "パターン3",
-            "パターン4",
-            "パターン5",
-            "パターン6-新人ギャングモニ",
-            "パターン7-ギャングデイ",
-            "パターン8-ナイターギャングたかしさん指示",
-            "パターン9-ナイターギャング昼投稿分",
-            "パターン競輪モーニングデイ",
-            "パターン競輪ナイター",
-            "パターン競輪ミッドナイト",
-            "オートレース",
-            "競艇エリート",
-            "予想落とし",
-            "西村さん",
-            "渡辺さん",
-            "佐藤さん",
-            "マリナさん"
+            "パターン1", "パターン2", "パターン2.5", "パターン3", "パターン4", "パターン5",
+            "パターン6-新人ギャングモニ", "パターン7-ギャングデイ",
+            "パターン8-ナイターギャングたかしさん指示", "パターン9-ナイターギャング昼投稿分",
+            "パターン競輪モーニングデイ", "パターン競輪ナイター", "パターン競輪ミッドナイト",
+            "オートレース", "競艇エリート", "予想落とし",
+            "西村さん", "渡辺さん", "佐藤さん", "マリナさん"
         ];
 
-        // ボタンを動的に生成
+        let selectedPattern = null;
+
+        // パターンボタン生成
         const buttonsContainer = document.getElementById('patternButtons');
         patterns.forEach(pattern => {
             const btn = document.createElement('button');
             btn.className = 'pattern-btn';
             btn.textContent = pattern;
-            btn.addEventListener('click', () => submitData(pattern));
+            btn.addEventListener('click', () => selectPattern(pattern, btn));
             buttonsContainer.appendChild(btn);
         });
+
+        function selectPattern(pattern, btn) {
+            document.querySelectorAll('.pattern-btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            selectedPattern = pattern;
+
+            document.getElementById('selectedPattern').textContent = '選択中: ' + pattern;
+            document.getElementById('selectedPattern').classList.add('show');
+            document.getElementById('submitBtn').disabled = false;
+            document.getElementById('submitBtn').textContent = '送信する';
+        }
 
         // 初期化
         function init() {
@@ -278,9 +409,7 @@
             document.getElementById('authContainer').style.display = 'none';
             document.getElementById('appContainer').style.display = 'block';
 
-            // GAS URLをローカルストレージから復元（なければデフォルト値）
             const savedUrl = localStorage.getItem('gasUrl');
-            const defaultGasUrl = 'https://script.google.com/macros/s/AKfycby8pyivOUJvmC3N9FZGIU7foq4uA3QQvctRdiPQmVZGL2nGNFONZzHUeIQ03Jk7xS9u/exec';
             document.getElementById('gasUrl').value = savedUrl || defaultGasUrl;
         }
 
@@ -301,16 +430,18 @@
             showAuth();
         }
 
-        // イベントリスナー
-        document.getElementById('loginBtn').addEventListener('click', login);
-        document.getElementById('logoutBtn').addEventListener('click', logout);
-        document.getElementById('loginPassword').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') login();
-        });
+        function showConfirmDialog() {
+            if (!selectedPattern) return;
 
-        document.getElementById('gasUrl').addEventListener('change', (e) => {
-            localStorage.setItem('gasUrl', e.target.value);
-        });
+            const text = document.getElementById('inputText').value.trim();
+            document.getElementById('confirmPattern').textContent = selectedPattern;
+            document.getElementById('confirmText').textContent = text || '(なし)';
+            document.getElementById('modalOverlay').classList.add('show');
+        }
+
+        function hideConfirmDialog() {
+            document.getElementById('modalOverlay').classList.remove('show');
+        }
 
         function showStatus(message, type) {
             const status = document.getElementById('status');
@@ -318,50 +449,78 @@
             status.className = 'status ' + type;
         }
 
-        function setButtonsDisabled(disabled) {
-            document.querySelectorAll('.pattern-btn').forEach(btn => {
-                btn.disabled = disabled;
-            });
-        }
+        async function submitData() {
+            hideConfirmDialog();
 
-        async function submitData(patternName) {
             const gasUrl = document.getElementById('gasUrl').value.trim();
             const text = document.getElementById('inputText').value.trim();
 
             if (!gasUrl) {
-                showStatus('Google Apps Script URLを入力してください', 'error');
+                showStatus('GAS URLを設定してください', 'error');
                 return;
             }
 
             const timestamp = new Date().toLocaleString('ja-JP');
 
             showStatus('送信中...', 'loading');
-            setButtonsDisabled(true);
+            document.getElementById('submitBtn').disabled = true;
 
             try {
                 await fetch(gasUrl, {
                     method: 'POST',
                     mode: 'no-cors',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        pattern: patternName,
+                        pattern: selectedPattern,
                         text: text,
                         timestamp: timestamp
                     })
                 });
 
-                showStatus(`送信完了: ${patternName} (${timestamp})`, 'success');
+                showStatus(`送信完了: ${selectedPattern} (${timestamp})`, 'success');
+
+                // リセット
                 document.getElementById('inputText').value = '';
+                document.querySelectorAll('.pattern-btn').forEach(b => b.classList.remove('selected'));
+                selectedPattern = null;
+                document.getElementById('selectedPattern').classList.remove('show');
+                document.getElementById('submitBtn').textContent = 'パターンを選択してください';
             } catch (error) {
                 showStatus('エラー: ' + error.message, 'error');
-            } finally {
-                setButtonsDisabled(false);
+                document.getElementById('submitBtn').disabled = false;
             }
         }
 
-        // 初期化実行
+        // イベントリスナー
+        document.getElementById('loginBtn').addEventListener('click', login);
+        document.getElementById('logoutBtn').addEventListener('click', logout);
+        document.getElementById('loginPassword').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') login();
+        });
+        document.getElementById('submitBtn').addEventListener('click', showConfirmDialog);
+        document.getElementById('cancelBtn').addEventListener('click', hideConfirmDialog);
+        document.getElementById('confirmBtn').addEventListener('click', submitData);
+        document.getElementById('modalOverlay').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('modalOverlay')) hideConfirmDialog();
+        });
+        document.getElementById('gasUrl').addEventListener('change', (e) => {
+            localStorage.setItem('gasUrl', e.target.value);
+        });
+        document.getElementById('configToggle').addEventListener('click', () => {
+            const section = document.getElementById('configSection');
+            const toggle = document.getElementById('configToggle');
+            section.classList.toggle('show');
+            toggle.textContent = section.classList.contains('show') ? '設定を隠す' : '設定を表示';
+        });
+        document.getElementById('pasteBtn').addEventListener('click', async () => {
+            try {
+                const text = await navigator.clipboard.readText();
+                document.getElementById('inputText').value = text;
+            } catch (err) {
+                alert('クリップボードへのアクセスが許可されていません');
+            }
+        });
+
         init();
     </script>
 </body>
