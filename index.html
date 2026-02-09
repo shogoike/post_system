@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>パターン投稿システム</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+
+        /* ログインフォーム */
+        .auth-container {
+            background: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            max-width: 400px;
+            margin: 50px auto;
+        }
+        .auth-container h2 {
+            margin-top: 0;
+            text-align: center;
+        }
+        .auth-container input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .auth-container button {
+            width: 100%;
+            padding: 12px;
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .auth-container button:hover {
+            background-color: #3367d6;
+        }
+        .auth-error {
+            color: #dc3545;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        /* メインアプリ */
+        .app-container {
+            display: none;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .header .user-info {
+            color: #666;
+        }
+        .logout-btn {
+            padding: 8px 16px;
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .logout-btn:hover {
+            background-color: #5a6268;
+        }
+
+        .config-section {
+            background: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .config-section label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+        }
+        .config-section input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .text-section {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .text-section label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 10px;
+        }
+        textarea {
+            width: 100%;
+            height: 120px;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            resize: vertical;
+        }
+        .buttons-section {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .buttons-section h2 {
+            margin-top: 0;
+            color: #555;
+        }
+        .pattern-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .pattern-btn {
+            padding: 12px 20px;
+            font-size: 14px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            background-color: #4285f4;
+            color: white;
+            transition: all 0.2s;
+        }
+        .pattern-btn:hover {
+            background-color: #3367d6;
+            transform: translateY(-2px);
+        }
+        .pattern-btn:active {
+            transform: translateY(0);
+        }
+        .pattern-btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+        }
+        .status.success {
+            display: block;
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            display: block;
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.loading {
+            display: block;
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- ログインフォーム -->
+    <div class="auth-container" id="authContainer">
+        <h2>ログイン</h2>
+        <div class="auth-error" id="authError"></div>
+        <input type="email" id="loginEmail" placeholder="メールアドレス" />
+        <input type="password" id="loginPassword" placeholder="パスワード" />
+        <button onclick="login()">ログイン</button>
+    </div>
+
+    <!-- メインアプリ -->
+    <div class="app-container" id="appContainer">
+        <div class="header">
+            <h1>パターン投稿システム</h1>
+            <div>
+                <span class="user-info" id="userEmail"></span>
+                <button class="logout-btn" onclick="logout()">ログアウト</button>
+            </div>
+        </div>
+
+        <div class="config-section">
+            <label for="gasUrl">Google Apps Script URL:</label>
+            <input type="text" id="gasUrl" placeholder="https://script.google.com/macros/s/xxx/exec" />
+        </div>
+
+        <div class="text-section">
+            <label for="inputText">テキスト:</label>
+            <textarea id="inputText" placeholder="ここにテキストを入力してください"></textarea>
+        </div>
+
+        <div class="buttons-section">
+            <h2>パターン選択</h2>
+            <div class="pattern-buttons" id="patternButtons"></div>
+        </div>
+
+        <div id="status" class="status"></div>
+    </div>
+
+    <script>
+        // =====================================================
+        // Supabase設定 - 以下を自分のプロジェクトの値に変更
+        // =====================================================
+        const SUPABASE_URL = 'https://rbxkgrfhcdizyyhyalyk.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_1z8Cl9ZuUqmOjs3MI5wszQ_iMLh2vfO';
+
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // パターン名の一覧
+        const patterns = [
+            "パターン1",
+            "パターン2",
+            "パターン2.5",
+            "パターン3",
+            "パターン4",
+            "パターン5",
+            "パターン6-新人ギャングモニ",
+            "パターン7-ギャングデイ",
+            "パターン8-ナイターギャングたかしさん指示",
+            "パターン9-ナイターギャング昼投稿分",
+            "パターン競輪モーニングデイ",
+            "パターン競輪ナイター",
+            "パターン競輪ミッドナイト",
+            "オートレース",
+            "競艇エリート",
+            "予想落とし",
+            "西村さん",
+            "渡辺さん",
+            "佐藤さん",
+            "マリナさん"
+        ];
+
+        // ボタンを動的に生成
+        const buttonsContainer = document.getElementById('patternButtons');
+        patterns.forEach(pattern => {
+            const btn = document.createElement('button');
+            btn.className = 'pattern-btn';
+            btn.textContent = pattern;
+            btn.onclick = () => submitData(pattern);
+            buttonsContainer.appendChild(btn);
+        });
+
+        // 初期化
+        async function init() {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                showApp(session.user);
+            } else {
+                showAuth();
+            }
+
+            // セッション変更を監視
+            supabase.auth.onAuthStateChange((event, session) => {
+                if (session) {
+                    showApp(session.user);
+                } else {
+                    showAuth();
+                }
+            });
+        }
+
+        function showAuth() {
+            document.getElementById('authContainer').classList.remove('hidden');
+            document.getElementById('appContainer').style.display = 'none';
+        }
+
+        function showApp(user) {
+            document.getElementById('authContainer').classList.add('hidden');
+            document.getElementById('appContainer').style.display = 'block';
+            document.getElementById('userEmail').textContent = user.email;
+
+            // GAS URLをローカルストレージから復元
+            const savedUrl = localStorage.getItem('gasUrl');
+            if (savedUrl) {
+                document.getElementById('gasUrl').value = savedUrl;
+            }
+        }
+
+        async function login() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const errorDiv = document.getElementById('authError');
+
+            errorDiv.textContent = '';
+
+            const { data, error } = await supabase.auth.signInWithPassword({
+                email: email,
+                password: password
+            });
+
+            if (error) {
+                errorDiv.textContent = 'ログイン失敗: ' + error.message;
+            }
+        }
+
+        async function logout() {
+            await supabase.auth.signOut();
+        }
+
+        // GAS URL変更時に保存
+        document.getElementById('gasUrl').addEventListener('change', (e) => {
+            localStorage.setItem('gasUrl', e.target.value);
+        });
+
+        function showStatus(message, type) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = 'status ' + type;
+        }
+
+        function setButtonsDisabled(disabled) {
+            document.querySelectorAll('.pattern-btn').forEach(btn => {
+                btn.disabled = disabled;
+            });
+        }
+
+        async function submitData(patternName) {
+            const gasUrl = document.getElementById('gasUrl').value.trim();
+            const text = document.getElementById('inputText').value.trim();
+
+            if (!gasUrl) {
+                showStatus('Google Apps Script URLを入力してください', 'error');
+                return;
+            }
+
+            const timestamp = new Date().toLocaleString('ja-JP');
+
+            showStatus('送信中...', 'loading');
+            setButtonsDisabled(true);
+
+            try {
+                const response = await fetch(gasUrl, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        pattern: patternName,
+                        text: text,
+                        timestamp: timestamp
+                    })
+                });
+
+                showStatus(`送信完了: ${patternName} (${timestamp})`, 'success');
+                document.getElementById('inputText').value = '';
+            } catch (error) {
+                showStatus('エラー: ' + error.message, 'error');
+            } finally {
+                setButtonsDisabled(false);
+            }
+        }
+
+        // 初期化実行
+        init();
+    </script>
+</body>
+</html>
