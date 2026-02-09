@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>パターン投稿システム</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -60,24 +59,6 @@
             margin-bottom: 15px;
             text-align: center;
         }
-        .auth-success {
-            color: #28a745;
-            margin-bottom: 15px;
-            text-align: center;
-        }
-        .auth-switch {
-            text-align: center;
-            margin-top: 15px;
-            font-size: 14px;
-            color: #666;
-        }
-        .auth-switch a {
-            color: #4285f4;
-            text-decoration: none;
-        }
-        .auth-switch a:hover {
-            text-decoration: underline;
-        }
 
         /* メインアプリ */
         .app-container {
@@ -88,9 +69,6 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 20px;
-        }
-        .header .user-info {
-            color: #666;
         }
         .logout-btn {
             padding: 8px 16px;
@@ -205,10 +183,6 @@
             color: #856404;
             border: 1px solid #ffeeba;
         }
-
-        .hidden {
-            display: none !important;
-        }
     </style>
 </head>
 <body>
@@ -216,19 +190,15 @@
     <div class="auth-container" id="authContainer">
         <h2>ログイン</h2>
         <div class="auth-error" id="authError"></div>
-        <input type="email" id="loginEmail" placeholder="メールアドレス" />
         <input type="password" id="loginPassword" placeholder="パスワード" />
-        <button onclick="login()">ログイン</button>
+        <button id="loginBtn">ログイン</button>
     </div>
 
     <!-- メインアプリ -->
     <div class="app-container" id="appContainer">
         <div class="header">
             <h1>パターン投稿システム</h1>
-            <div>
-                <span class="user-info" id="userEmail"></span>
-                <button class="logout-btn" onclick="logout()">ログアウト</button>
-            </div>
+            <button class="logout-btn" id="logoutBtn">ログアウト</button>
         </div>
 
         <div class="config-section">
@@ -251,12 +221,9 @@
 
     <script>
         // =====================================================
-        // Supabase設定 - 以下を自分のプロジェクトの値に変更
+        // パスワード設定 - 好きなパスワードに変更してください
         // =====================================================
-        const SUPABASE_URL = 'https://rbxkgrfhcdizyyhyalyk.supabase.co';
-        const SUPABASE_ANON_KEY = 'sb_publishable_1z8Cl9ZuUqmOjs3MI5wszQ_iMLh2vfO';
-
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const APP_PASSWORD = 'post2024';
 
         // パターン名の一覧
         const patterns = [
@@ -288,91 +255,60 @@
             const btn = document.createElement('button');
             btn.className = 'pattern-btn';
             btn.textContent = pattern;
-            btn.onclick = () => submitData(pattern);
+            btn.addEventListener('click', () => submitData(pattern));
             buttonsContainer.appendChild(btn);
         });
 
         // 初期化
-        async function init() {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session) {
-                showApp(session.user);
+        function init() {
+            const isLoggedIn = sessionStorage.getItem('loggedIn') === 'true';
+            if (isLoggedIn) {
+                showApp();
             } else {
                 showAuth();
             }
-
-            // セッション変更を監視
-            supabase.auth.onAuthStateChange((event, session) => {
-                if (session) {
-                    showApp(session.user);
-                } else {
-                    showAuth();
-                }
-            });
         }
 
         function showAuth() {
-            document.getElementById('authContainer').classList.remove('hidden');
+            document.getElementById('authContainer').style.display = 'block';
             document.getElementById('appContainer').style.display = 'none';
         }
 
-        function showApp(user) {
-            console.log('showApp called with user:', user);
+        function showApp() {
             document.getElementById('authContainer').style.display = 'none';
             document.getElementById('appContainer').style.display = 'block';
-            document.getElementById('userEmail').textContent = user.email;
 
             // GAS URLをローカルストレージから復元
             const savedUrl = localStorage.getItem('gasUrl');
             if (savedUrl) {
                 document.getElementById('gasUrl').value = savedUrl;
             }
-            console.log('App view should be visible now');
         }
 
-        async function login() {
-            const email = document.getElementById('loginEmail').value;
+        function login() {
             const password = document.getElementById('loginPassword').value;
             const errorDiv = document.getElementById('authError');
 
-            errorDiv.textContent = 'ログイン中...';
-
-            if (!email || !password) {
-                errorDiv.textContent = 'メールアドレスとパスワードを入力してください';
-                return;
-            }
-
-            try {
-                console.log('Attempting login with:', email);
-                const { data, error } = await supabase.auth.signInWithPassword({
-                    email: email,
-                    password: password
-                });
-
-                console.log('Login response data:', JSON.stringify(data, null, 2));
-                console.log('Login response error:', error);
-
-                if (error) {
-                    errorDiv.textContent = 'ログイン失敗: ' + error.message;
-                } else if (data && data.session) {
-                    console.log('Login success! Switching to app view...');
-                    errorDiv.textContent = 'ログイン成功！';
-                    showApp(data.user);
-                } else {
-                    errorDiv.textContent = 'セッションが取得できませんでした';
-                    console.log('No session in response');
-                }
-            } catch (e) {
-                console.error('Login exception:', e);
-                errorDiv.textContent = 'エラー: ' + e.message;
+            if (password === APP_PASSWORD) {
+                sessionStorage.setItem('loggedIn', 'true');
+                showApp();
+            } else {
+                errorDiv.textContent = 'パスワードが違います';
             }
         }
 
-        async function logout() {
-            await supabase.auth.signOut();
+        function logout() {
+            sessionStorage.removeItem('loggedIn');
+            showAuth();
         }
 
-        // GAS URL変更時に保存
+        // イベントリスナー
+        document.getElementById('loginBtn').addEventListener('click', login);
+        document.getElementById('logoutBtn').addEventListener('click', logout);
+        document.getElementById('loginPassword').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') login();
+        });
+
         document.getElementById('gasUrl').addEventListener('change', (e) => {
             localStorage.setItem('gasUrl', e.target.value);
         });
@@ -404,7 +340,7 @@
             setButtonsDisabled(true);
 
             try {
-                const response = await fetch(gasUrl, {
+                await fetch(gasUrl, {
                     method: 'POST',
                     mode: 'no-cors',
                     headers: {
