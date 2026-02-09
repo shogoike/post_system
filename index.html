@@ -278,11 +278,10 @@
             document.getElementById('authContainer').style.display = 'none';
             document.getElementById('appContainer').style.display = 'block';
 
-            // GAS URLをローカルストレージから復元
+            // GAS URLをローカルストレージから復元（なければデフォルト値）
             const savedUrl = localStorage.getItem('gasUrl');
-            if (savedUrl) {
-                document.getElementById('gasUrl').value = savedUrl;
-            }
+            const defaultGasUrl = 'https://script.google.com/macros/s/AKfycbxXkjGLpwuKlF6NDurnCgIjivwWZJd1T13-IuZCARBf-xuXqC3TkhRTwNGNdUKL7B6l/exec';
+            document.getElementById('gasUrl').value = savedUrl || defaultGasUrl;
         }
 
         function login() {
