@@ -566,16 +566,20 @@
 
                 const todayStr = formatDate(now);
                 const tomorrowStr = formatDate(tomorrow);
+                const currentMinutes = now.getHours() * 60 + now.getMinutes();
 
-                // 今日と明日の競艇・競輪データをマージ
-                const mergedRaces = {
+                // 今日と明日のデータを別々に保持
+                const todayRaces = {
                     ...(raceDataCache.kyotei?.[todayStr] || {}),
-                    ...(raceDataCache.keirin?.[todayStr] || {}),
+                    ...(raceDataCache.keirin?.[todayStr] || {})
+                };
+                const tomorrowRaces = {
                     ...(raceDataCache.kyotei?.[tomorrowStr] || {}),
                     ...(raceDataCache.keirin?.[tomorrowStr] || {})
                 };
 
-                console.log('利用可能な会場:', Object.keys(mergedRaces));
+                console.log('今日の会場:', Object.keys(todayRaces));
+                console.log('明日の会場:', Object.keys(tomorrowRaces));
 
                 // レースタイトルごとに時間チェック
                 const racePattern = /([^\d]+?)(\d+)R\s+(\d{1,2}):(\d{2})/;
@@ -586,22 +590,31 @@
                     if (match) {
                         const venue = match[1].trim();
                         const raceNum = parseInt(match[2]);
+                        const raceHour = parseInt(match[3]);
+                        const raceMin = parseInt(match[4]);
                         const timeStr = `${match[3]}:${match[4]}`;
                         const raceKey = `${raceNum}R`;
 
-                        if (mergedRaces[venue] && mergedRaces[venue][raceKey]) {
-                            let actualTime = mergedRaces[venue][raceKey].time;
+                        // レース時間を分に変換
+                        const raceMinutes = raceHour * 60 + raceMin;
+
+                        // 現在時刻より前なら明日、後なら今日のデータを参照
+                        const targetRaces = raceMinutes < currentMinutes ? tomorrowRaces : todayRaces;
+                        const targetDay = raceMinutes < currentMinutes ? '明日' : '今日';
+
+                        if (targetRaces[venue] && targetRaces[venue][raceKey]) {
+                            let actualTime = targetRaces[venue][raceKey].time;
 
                             if (actualTime) {
                                 // 時間フォーマットを統一
                                 actualTime = actualTime.replace("08:", "8:").replace("09:", "9:");
 
                                 if (timeStr !== actualTime) {
-                                    errors.push(`${venue}${raceNum}R の時間が誤っている。入力: ${timeStr} → 正しい時間: ${actualTime}`);
+                                    errors.push(`${venue}${raceNum}R の時間が誤っている。入力: ${timeStr} → 正しい時間: ${actualTime}（${targetDay}のデータ）`);
                                 }
                             }
                         } else {
-                            warnings.push(`${venue}${raceNum}R の時間データがありません（スタッフ確認）`);
+                            warnings.push(`${venue}${raceNum}R の時間データがありません（${targetDay}）`);
                         }
                     }
                 }
