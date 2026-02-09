@@ -317,7 +317,8 @@
         }
 
         function showApp(user) {
-            document.getElementById('authContainer').classList.add('hidden');
+            console.log('showApp called with user:', user);
+            document.getElementById('authContainer').style.display = 'none';
             document.getElementById('appContainer').style.display = 'block';
             document.getElementById('userEmail').textContent = user.email;
 
@@ -326,6 +327,7 @@
             if (savedUrl) {
                 document.getElementById('gasUrl').value = savedUrl;
             }
+            console.log('App view should be visible now');
         }
 
         async function login() {
@@ -333,7 +335,7 @@
             const password = document.getElementById('loginPassword').value;
             const errorDiv = document.getElementById('authError');
 
-            errorDiv.textContent = '';
+            errorDiv.textContent = 'ログイン中...';
 
             if (!email || !password) {
                 errorDiv.textContent = 'メールアドレスとパスワードを入力してください';
@@ -341,21 +343,27 @@
             }
 
             try {
+                console.log('Attempting login with:', email);
                 const { data, error } = await supabase.auth.signInWithPassword({
                     email: email,
                     password: password
                 });
 
-                console.log('Login response:', data, error);
+                console.log('Login response data:', JSON.stringify(data, null, 2));
+                console.log('Login response error:', error);
 
                 if (error) {
                     errorDiv.textContent = 'ログイン失敗: ' + error.message;
-                } else if (data.session) {
-                    console.log('Login success, session:', data.session);
+                } else if (data && data.session) {
+                    console.log('Login success! Switching to app view...');
+                    errorDiv.textContent = 'ログイン成功！';
                     showApp(data.user);
+                } else {
+                    errorDiv.textContent = 'セッションが取得できませんでした';
+                    console.log('No session in response');
                 }
             } catch (e) {
-                console.error('Login error:', e);
+                console.error('Login exception:', e);
                 errorDiv.textContent = 'エラー: ' + e.message;
             }
         }
