@@ -390,11 +390,8 @@
             <label>Google Apps Script URL:</label>
             <input type="text" id="gasUrl" placeholder="GAS URL" />
 
-            <label style="margin-top:12px;">JSONbin.io Bin ID:</label>
+            <label style="margin-top:12px;">パターン用 Bin ID（任意）:</label>
             <input type="text" id="jsonbinBinId" placeholder="例: 65a1b2c3d4e5f6..." />
-
-            <label style="margin-top:12px;">JSONbin.io API Key:</label>
-            <input type="text" id="jsonbinApiKey" placeholder="$2a$10$..." />
 
             <button class="reload-btn" id="reloadPatternsBtn">パターンを再読み込み</button>
         </div>
@@ -419,18 +416,33 @@
     </div>
 
     <script>
-        const APP_PASSWORD = 'post2024';
-        const defaultGasUrl = 'https://script.google.com/macros/s/AKfycby8pyivOUJvmC3N9FZGIU7foq4uA3QQvctRdiPQmVZGL2nGNFONZzHUeIQ03Jk7xS9u/exec';
-
-        // JSONbin.io設定（パターン用）
-        const JSONBIN_API_KEY = '$2a$10$PdTNFUnYM6.Xw2dRjRmlO.ecKLu4vw5B8HTWk4qWIB6b7N7fBpZGS';
-        const JSONBIN_BIN_ID = 'xxxxxxxxxxxxxxxxxxxxxxxx'; // パターン用Bin ID
-
-        // レースデータ用Bin ID
-        const RACE_DATA_BIN_ID = '6989e55a43b1c97be971c359';
+        // 設定（APIから取得）
+        let APP_PASSWORD = '';
+        let JSONBIN_API_KEY = '';
+        let RACE_DATA_BIN_ID = '';
+        let defaultGasUrl = '';
 
         // レースデータキャッシュ
         let raceDataCache = null;
+
+        // 設定をAPIから取得
+        async function loadConfig() {
+            try {
+                const response = await fetch('/api/config');
+                if (response.ok) {
+                    const config = await response.json();
+                    APP_PASSWORD = config.password || '';
+                    JSONBIN_API_KEY = config.jsonbinApiKey || '';
+                    RACE_DATA_BIN_ID = config.raceDataBinId || '';
+                    defaultGasUrl = config.gasUrl || '';
+                    console.log('設定読み込み完了');
+                    return true;
+                }
+            } catch (e) {
+                console.error('設定読み込みエラー:', e);
+            }
+            return false;
+        }
 
         // デフォルトパターン（JSONbin.io読み込み失敗時のフォールバック）
         const defaultPatterns = [
@@ -647,11 +659,11 @@
         // JSONbin.ioからパターンを読み込む
         async function loadPatternsFromJsonbin() {
             // 設定からBin IDとAPI Keyを取得
-            const binId = localStorage.getItem('jsonbinBinId') || JSONBIN_BIN_ID;
-            const apiKey = localStorage.getItem('jsonbinApiKey') || JSONBIN_API_KEY;
+            const binId = localStorage.getItem('jsonbinBinId');
+            const apiKey = JSONBIN_API_KEY;
 
-            if (!binId || binId.includes('xxxx')) {
-                console.log('JSONbin.io未設定、デフォルトパターンを使用');
+            if (!binId) {
+                console.log('パターン用Bin ID未設定、デフォルトパターンを使用');
                 return defaultPatterns;
             }
 
@@ -702,6 +714,9 @@
 
         // 初期化
         async function init() {
+            // まず設定を読み込む
+            await loadConfig();
+
             const isLoggedIn = sessionStorage.getItem('loggedIn') === 'true';
             if (isLoggedIn) {
                 showApp();
@@ -727,11 +742,9 @@
             const savedUrl = localStorage.getItem('gasUrl');
             document.getElementById('gasUrl').value = savedUrl || defaultGasUrl;
 
-            // JSONbin.io設定を復元
+            // JSONbin.io Bin IDを復元
             const savedBinId = localStorage.getItem('jsonbinBinId');
-            const savedApiKey = localStorage.getItem('jsonbinApiKey');
             if (savedBinId) document.getElementById('jsonbinBinId').value = savedBinId;
-            if (savedApiKey) document.getElementById('jsonbinApiKey').value = savedApiKey;
         }
 
         function login() {
@@ -884,9 +897,6 @@
         // JSONbin.io設定の保存
         document.getElementById('jsonbinBinId').addEventListener('change', (e) => {
             localStorage.setItem('jsonbinBinId', e.target.value);
-        });
-        document.getElementById('jsonbinApiKey').addEventListener('change', (e) => {
-            localStorage.setItem('jsonbinApiKey', e.target.value);
         });
 
         // パターン再読み込み
