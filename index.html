@@ -60,6 +60,24 @@
             margin-bottom: 15px;
             text-align: center;
         }
+        .auth-success {
+            color: #28a745;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .auth-switch {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 14px;
+            color: #666;
+        }
+        .auth-switch a {
+            color: #4285f4;
+            text-decoration: none;
+        }
+        .auth-switch a:hover {
+            text-decoration: underline;
+        }
 
         /* メインアプリ */
         .app-container {
@@ -194,13 +212,17 @@
     </style>
 </head>
 <body>
-    <!-- ログインフォーム -->
+    <!-- ログイン/サインアップフォーム -->
     <div class="auth-container" id="authContainer">
-        <h2>ログイン</h2>
+        <h2 id="authTitle">ログイン</h2>
         <div class="auth-error" id="authError"></div>
         <input type="email" id="loginEmail" placeholder="メールアドレス" />
         <input type="password" id="loginPassword" placeholder="パスワード" />
-        <button onclick="login()">ログイン</button>
+        <button id="authButton" onclick="login()">ログイン</button>
+        <p class="auth-switch">
+            <span id="authSwitchText">アカウントがない場合は</span>
+            <a href="#" onclick="toggleAuthMode(); return false;" id="authSwitchLink">サインアップ</a>
+        </p>
     </div>
 
     <!-- メインアプリ -->
@@ -310,12 +332,25 @@
             }
         }
 
+        let isLoginMode = true;
+
+        function toggleAuthMode() {
+            isLoginMode = !isLoginMode;
+            document.getElementById('authTitle').textContent = isLoginMode ? 'ログイン' : 'サインアップ';
+            document.getElementById('authButton').textContent = isLoginMode ? 'ログイン' : 'サインアップ';
+            document.getElementById('authButton').onclick = isLoginMode ? login : signup;
+            document.getElementById('authSwitchText').textContent = isLoginMode ? 'アカウントがない場合は' : 'アカウントをお持ちの場合は';
+            document.getElementById('authSwitchLink').textContent = isLoginMode ? 'サインアップ' : 'ログイン';
+            document.getElementById('authError').textContent = '';
+        }
+
         async function login() {
             const email = document.getElementById('loginEmail').value;
             const password = document.getElementById('loginPassword').value;
             const errorDiv = document.getElementById('authError');
 
             errorDiv.textContent = '';
+            errorDiv.className = 'auth-error';
 
             const { data, error } = await supabase.auth.signInWithPassword({
                 email: email,
@@ -324,6 +359,33 @@
 
             if (error) {
                 errorDiv.textContent = 'ログイン失敗: ' + error.message;
+            }
+        }
+
+        async function signup() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const errorDiv = document.getElementById('authError');
+
+            errorDiv.textContent = '';
+            errorDiv.className = 'auth-error';
+
+            if (password.length < 6) {
+                errorDiv.textContent = 'パスワードは6文字以上必要です';
+                return;
+            }
+
+            const { data, error } = await supabase.auth.signUp({
+                email: email,
+                password: password
+            });
+
+            if (error) {
+                errorDiv.textContent = 'サインアップ失敗: ' + error.message;
+            } else {
+                errorDiv.className = 'auth-success';
+                errorDiv.textContent = 'サインアップ成功！ログインしてください';
+                toggleAuthMode();
             }
         }
 
