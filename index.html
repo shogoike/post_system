@@ -422,9 +422,15 @@
         const APP_PASSWORD = 'post2024';
         const defaultGasUrl = 'https://script.google.com/macros/s/AKfycby8pyivOUJvmC3N9FZGIU7foq4uA3QQvctRdiPQmVZGL2nGNFONZzHUeIQ03Jk7xS9u/exec';
 
-        // JSONbin.io設定
-        const JSONBIN_API_KEY = '$2a$10$xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'; // ← あなたのX-Master-Keyに変更
-        const JSONBIN_BIN_ID = 'xxxxxxxxxxxxxxxxxxxxxxxx'; // ← あなたのBin IDに変更
+        // JSONbin.io設定（パターン用）
+        const JSONBIN_API_KEY = '$2a$10$PdTNFUnYM6.Xw2dRjRmlO.ecKLu4vw5B8HTWk4qWIB6b7N7fBpZGS';
+        const JSONBIN_BIN_ID = 'xxxxxxxxxxxxxxxxxxxxxxxx'; // パターン用Bin ID
+
+        // レースデータ用Bin ID
+        const RACE_DATA_BIN_ID = '6989e55a43b1c97be971c359';
+
+        // レースデータキャッシュ
+        let raceDataCache = null;
 
         // デフォルトパターン（JSONbin.io読み込み失敗時のフォールバック）
         const defaultPatterns = [
@@ -462,8 +468,8 @@
             return text;
         }
 
-        // 書式チェック
-        function validateText(text, patternName) {
+        // 書式チェック（非同期）
+        async function validateText(text, patternName) {
             const errors = [];
             const warnings = [];
 
@@ -543,7 +549,75 @@
                 warnings.push("今日明日の扱いのレースが混ざっている可能性があります");
             }
 
+            // Check 6: レース時間とデータの突合
+            if (!raceDataCache) {
+                await loadRaceData();
+            }
+
+            if (raceDataCache) {
+                // 今日の日付を取得
+                const now = new Date();
+                const dateStr = now.getFullYear().toString() +
+                    (now.getMonth() + 1).toString().padStart(2, '0') +
+                    now.getDate().toString().padStart(2, '0');
+
+                // 競艇と競輪のデータをマージ
+                const kyoteiRaces = raceDataCache.kyotei?.[dateStr] || {};
+                const keirinRaces = raceDataCache.keirin?.[dateStr] || {};
+                const mergedRaces = { ...kyoteiRaces, ...keirinRaces };
+
+                // レースタイトルごとに時間チェック
+                const racePattern = /([^\d]+?)(\d+)R\s+(\d{1,2}):(\d{2})/;
+
+                for (const title of raceTitle) {
+                    const match = title.match(racePattern);
+
+                    if (match) {
+                        const venue = match[1].trim();
+                        const raceNum = parseInt(match[2]);
+                        const timeStr = `${match[3]}:${match[4]}`;
+                        const raceKey = `${raceNum}R`;
+
+                        if (mergedRaces[venue] && mergedRaces[venue][raceKey]) {
+                            let actualTime = mergedRaces[venue][raceKey].time;
+
+                            if (actualTime) {
+                                // 時間フォーマットを統一
+                                actualTime = actualTime.replace("08:", "8:").replace("09:", "9:");
+
+                                if (timeStr !== actualTime) {
+                                    errors.push(`${venue}${raceNum}R の時間が誤っている。入力: ${timeStr} → 正しい時間: ${actualTime}`);
+                                }
+                            }
+                        } else {
+                            warnings.push(`${venue}${raceNum}R の時間データがありません（スタッフ確認）`);
+                        }
+                    }
+                }
+            } else {
+                warnings.push("レースデータを取得できませんでした。時間チェックをスキップしました。");
+            }
+
             return { errors, warnings, formattedText: text };
+        }
+
+        // JSONbin.ioからレースデータを読み込む
+        async function loadRaceData() {
+            try {
+                const response = await fetch(`https://api.jsonbin.io/v3/b/${RACE_DATA_BIN_ID}/latest`, {
+                    headers: { 'X-Master-Key': JSONBIN_API_KEY }
+                });
+
+                if (!response.ok) throw new Error('レースデータ読み込みエラー');
+
+                const data = await response.json();
+                raceDataCache = data.record;
+                console.log('レースデータ読み込み成功:', raceDataCache.updated_at);
+                return raceDataCache;
+            } catch (error) {
+                console.error('レースデータ読み込み失敗:', error);
+                return null;
+            }
         }
 
         // JSONbin.ioからパターンを読み込む
@@ -610,6 +684,8 @@
                 // JSONbin.ioからパターンを読み込み
                 patterns = await loadPatternsFromJsonbin();
                 renderPatternButtons(patterns);
+                // レースデータを事前読み込み
+                await loadRaceData();
             } else {
                 showAuth();
             }
@@ -653,11 +729,18 @@
 
         let formattedTextToSend = '';
 
-        function showConfirmDialog() {
+        async function showConfirmDialog() {
             if (!selectedPattern) return;
 
+            // ローディング表示
+            document.getElementById('submitBtn').disabled = true;
+            document.getElementById('submitBtn').textContent = 'チェック中...';
+
             const text = document.getElementById('inputText').value.trim();
-            const { errors, warnings, formattedText } = validateText(text, selectedPattern);
+            const { errors, warnings, formattedText } = await validateText(text, selectedPattern);
+
+            document.getElementById('submitBtn').disabled = false;
+            document.getElementById('submitBtn').textContent = '送信する';
 
             formattedTextToSend = formattedText;
 
