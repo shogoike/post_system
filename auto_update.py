@@ -12,10 +12,13 @@ import os
 import time
 
 # =====================================================
-# JSONbin.io設定 - 以下を自分の値に変更してください
+# JSONbin.io設定
 # =====================================================
-JSONBIN_API_KEY = '$2a$10$xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'  # X-Master-Key
-JSONBIN_BIN_ID = 'xxxxxxxxxxxxxxxxxxxxxxxx'  # Bin ID
+JSONBIN_API_KEY = '$2a$10$PdTNFUnYM6.Xw2dRjRmlO.ecKLu4vw5B8HTWk4qWIB6b7N7fBpZGS'
+JSONBIN_BIN_ID = '6989e55a43b1c97be971c359'
+
+# 更新間隔（秒）
+UPDATE_INTERVAL = 30 * 60  # 30分ごと
 
 # ログファイル
 LOG_FILE = os.path.join(os.path.dirname(__file__), 'auto_update.log')
@@ -202,9 +205,10 @@ def save_local_json(data, filename):
     return filepath
 
 
-def main():
+def fetch_and_upload():
+    """データ取得・アップロード処理"""
     log("=" * 50)
-    log("自動更新開始")
+    log("データ取得開始")
 
     now = datetime.now()
     tomorrow = now + timedelta(days=1)
@@ -254,11 +258,39 @@ def main():
         # JSONbin.ioにアップロード
         upload_to_jsonbin(all_data)
 
-        log("自動更新完了")
+        log("データ取得完了")
+        return True
 
     except Exception as e:
         log(f"エラー発生: {e}")
-        raise
+        return False
+
+
+def main():
+    """常駐型メイン処理"""
+    log("=" * 50)
+    log("常駐モード開始")
+    log(f"更新間隔: {UPDATE_INTERVAL // 60}分")
+    log("終了するには Ctrl+C を押してください")
+    log("=" * 50)
+
+    while True:
+        try:
+            fetch_and_upload()
+
+            next_update = datetime.now() + timedelta(seconds=UPDATE_INTERVAL)
+            log(f"次回更新: {next_update.strftime('%H:%M:%S')}")
+            log("-" * 30)
+
+            time.sleep(UPDATE_INTERVAL)
+
+        except KeyboardInterrupt:
+            log("終了します")
+            break
+        except Exception as e:
+            log(f"予期せぬエラー: {e}")
+            log("60秒後に再試行...")
+            time.sleep(60)
 
 
 if __name__ == "__main__":
